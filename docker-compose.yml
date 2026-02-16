@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mdm-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: mdm_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  elasticsearch:
+    # THAY ĐỔI Ở ĐÂY: Thay image bằng build
+    build: .
+    container_name: mdm-elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: mdm-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+volumes:
+  mysql_data:
+  es_data:
