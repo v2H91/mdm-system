@@ -2,7 +2,6 @@ package mdm_service.masterdata.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.monitorjbl.xlsx.StreamingReader;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -20,10 +19,7 @@ import mdm_service.masterdata.exception.BusinessException;
 import mdm_service.masterdata.exception.ResourceNotFoundException;
 import mdm_service.masterdata.repository.JobRepository;
 import mdm_service.masterdata.repository.OrganizationRepository;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.cache.annotation.CacheEvict;
@@ -48,7 +44,7 @@ import java.util.Map;
 public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
-    private final ValidationService validationService; // Service tự viết để check Regex
+    private final ValidationService validationService;
     private final ApplicationEventPublisher eventPublisher; // Dùng cho Event-driven
     private final JobRepository jobRepository;
     private final OrganizationSearchService searchService;
@@ -107,6 +103,8 @@ public class OrganizationService {
     }
 
     public void delete(Long id) {
+        Organization org = organizationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+        organizationRepository.delete(org);
     }
 
 
@@ -170,9 +168,8 @@ public class OrganizationService {
         job.setStartTime(LocalDateTime.now());
         jobRepository.save(job);
         List<Organization> batchList = new ArrayList<>();
-
-        try (InputStream is = new FileInputStream(tempPath);
-             Workbook workbook = StreamingReader.builder().rowCacheSize(100).open(is)) {
+        File file = new File(tempPath);
+        try (Workbook workbook = WorkbookFactory.create(file))  {
 
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {

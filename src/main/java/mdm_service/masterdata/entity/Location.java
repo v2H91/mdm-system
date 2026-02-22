@@ -1,5 +1,6 @@
 package mdm_service.masterdata.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +19,8 @@ public class Location {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_code")
-    private Location parent; // Phường có parent là Quận/Huyện hoặc Tỉnh/TP
+    @JsonIgnore // Ngăn việc trả về cả cây cha-con gây tràn bộ nhớ JSON
+    private Location parent;
 
     private boolean isDeleted = false;
 }

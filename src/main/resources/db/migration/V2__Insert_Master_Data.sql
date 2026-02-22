@@ -1,15 +1,3 @@
--- Dữ liệu địa chỉ mẫu
--- Dữ liệu Tỉnh (PROVINCE)
-INSERT INTO locations (code, name, name_with_type, type, parent_code, path_with_type)
-VALUES ('01', 'Hà Nội', 'Thành phố Hà Nội', 'PROVINCE', NULL, 'Thành phố Hà Nội'),
-       ('79', 'Hồ Chí Minh', 'Thành phố Hồ Chí Minh', 'PROVINCE', NULL, 'Thành phố Hồ Chí Minh');
-
--- Dữ liệu Xã (WARD) trỏ thẳng về Tỉnh
-INSERT INTO locations (code, name, name_with_type, type, parent_code, path_with_type)
-VALUES ('00001', 'Dịch Vọng Hậu', 'Phường Dịch Vọng Hậu', 'WARD', '01', 'Phường Dịch Vọng Hậu, Thành phố Hà Nội'),
-       ('00002', 'Hàng Bạc', 'Phường Hàng Bạc', 'WARD', '01', 'Phường Hàng Bạc, Thành phố Hà Nội'),
-       ('40001', 'Bến Nghé', 'Phường Bến Nghé', 'WARD', '79', 'Phường Bến Nghé, Thành phố Hồ Chí Minh');
-
 -- Dữ liệu Validation Rules
 INSERT INTO validation_rules (entity_name, field_name, regex_pattern, error_message)
 VALUES ('ORGANIZATION', 'email', '^[A-Za-z0-9+_.-]+@(.+)$', 'Định dạng Email không hợp lệ'),

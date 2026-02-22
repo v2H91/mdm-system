@@ -1,6 +1,5 @@
 package mdm_service.masterdata.service;
 
-import com.monitorjbl.xlsx.StreamingReader;
 import lombok.RequiredArgsConstructor;
 import mdm_service.masterdata.constant.JobStatus;
 import mdm_service.masterdata.constant.LocationType;
@@ -8,16 +7,15 @@ import mdm_service.masterdata.entity.BatchJob;
 import mdm_service.masterdata.entity.Location;
 import mdm_service.masterdata.repository.JobRepository;
 import mdm_service.masterdata.repository.LocationRepository;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +26,7 @@ import java.util.List;
 public class LocationImportService {
     private final LocationRepository locationRepository;
     private final JobRepository jobRepository;
+
     @Async
     public void importLocations(String jobId, String tempFilePath) {
         File file = new File(tempFilePath);
@@ -40,16 +39,8 @@ public class LocationImportService {
 
         List<Location> batchList = new ArrayList<>();
 
-        // 1. Sử dụng StreamingReader để chỉ giữ 100 dòng trong RAM tại một thời điểm
-        try (InputStream is = new FileInputStream(file);
-             Workbook workbook = StreamingReader.builder()
-                     .rowCacheSize(100)    // Số lượng dòng giữ trong bộ nhớ
-                     .bufferSize(4096)     // Kích thước buffer đọc file
-                     .open(is)) {
-
+        try (Workbook workbook = WorkbookFactory.create(file))  {
             Sheet sheet = workbook.getSheetAt(0);
-            // Lưu ý: StreamingReader không biết trước tổng số dòng, ta ước tính hoặc lấy từ meta
-
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; // Bỏ qua header
 
@@ -63,23 +54,17 @@ public class LocationImportService {
                 // 3. Thực hiện Batch Insert khi đủ số lượng
                 if (batchList.size() >= batchSize) {
                     locationRepository.saveAll(batchList);
-                    locationRepository.flush(); // Đẩy xuống DB
+                    locationRepository.flush();
                     batchList.clear();
                 }
             }
-
-            // Lưu nốt số còn dư
-            if (!batchList.isEmpty()) {
-                locationRepository.saveAll(batchList);
-            }
-
             job.setStatus(JobStatus.COMPLETED);
-
         } catch (Exception e) {
             job.setStatus(JobStatus.FAILED);
             job.setErrorMessage("Lỗi tại dòng " + processed + ": " + e.getMessage());
         } finally {
-            if (file.exists()) file.delete();
+            job.setEndTime(LocalDateTime.now());
+            jobRepository.save(job);
         }
     }
 
@@ -114,5 +99,11 @@ public class LocationImportService {
     private String getCellValue(Cell cell) {
         if (cell == null) return "";
         return cell.getStringCellValue().trim();
+    }
+
+    public Page<Location> getAllLocations(int page, int size) {
+        // Tạo đối tượng Pageable (trang bắt đầu từ 0)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        return locationRepository.findAll(pageable);
     }
 }

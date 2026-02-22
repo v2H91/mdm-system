@@ -57,15 +57,12 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(authToken);
             return true;
-        } catch (MalformedJwtException ex) {
-            log.error("Trace - Token không hợp lệ");
         } catch (ExpiredJwtException ex) {
-            log.error("Trace - Token đã hết hạn");
-        } catch (UnsupportedJwtException ex) {
-            log.error("Trace - Token không được hỗ trợ");
-        } catch (IllegalArgumentException ex) {
-            log.error("Trace - Chuỗi JWT claims trống");
+            log.error("Token đã hết hạn");
+            throw ex; // Ném ra để Filter bắt được
+        } catch (MalformedJwtException ex) {
+            log.error("Token không hợp lệ");
+            throw ex;
         }
-        return false;
     }
 }

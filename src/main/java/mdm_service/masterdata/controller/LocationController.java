@@ -1,20 +1,18 @@
 package mdm_service.masterdata.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import mdm_service.masterdata.constant.JobStatus;
-import mdm_service.masterdata.dto.LocationDTO;
 import mdm_service.masterdata.entity.BatchJob;
+import mdm_service.masterdata.entity.Location;
 import mdm_service.masterdata.repository.JobRepository;
 import mdm_service.masterdata.service.LocationImportService;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.data.elasticsearch.core.sql.SqlResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
@@ -27,8 +25,11 @@ public class LocationController {
     private final LocationImportService importService;
     private final JobRepository jobRepository;
 
-    @PostMapping("/import")
-    public ResponseEntity<String> importLocations(@RequestParam("file") MultipartFile file) {
+    @Operation(summary = "Import địa chỉ từ file Excel")
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> importLocations(
+            @Parameter(description = "File Excel chứa danh sách địa chỉ (.xlsx)")
+            @RequestPart("file") MultipartFile file) {
         try {
             // 1. Tạo file tạm trên đĩa để StreamingReader có thể đọc từ luồng file
             Path tempFile = Files.createTempFile("import_loc_", ".xlsx");
@@ -47,5 +48,15 @@ public class LocationController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi đọc file: " + e.getMessage());
         }
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'APPROVER', 'VIEWER')")
+    public ResponseEntity<Page<Location>> getAllLocations(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<Location> locations = importService.getAllLocations(page, size);
+        return ResponseEntity.ok(locations);
     }
 }

@@ -51,14 +51,8 @@ CREATE TABLE IF NOT EXISTS addresses (
 
     is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    -- Ràng buộc khóa ngoại duy nhất tới bảng locations
-    CONSTRAINT fk_address_location FOREIGN KEY (location_code) REFERENCES locations(code)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Thêm index để tối ưu các câu truy vấn tìm kiếm địa chỉ theo vùng
-CREATE INDEX idx_address_location_code ON addresses(location_code);
 
 -- 4. Table Org_Addresses
 CREATE TABLE IF NOT EXISTS org_addresses (

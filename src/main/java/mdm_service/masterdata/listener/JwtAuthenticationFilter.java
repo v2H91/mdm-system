@@ -1,5 +1,8 @@
 package mdm_service.masterdata.listener;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,12 +40,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
             }
-        }catch(Exception ignored){
-
+        } catch (ExpiredJwtException e) {
+            // Gán thông báo lỗi vào request để AuthenticationEntryPoint sử dụng
+            request.setAttribute("JWT_ERROR", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        } catch (MalformedJwtException | SignatureException e) {
+            request.setAttribute("JWT_ERROR", "Mã xác thực không hợp lệ hoặc đã bị thay đổi.");
+        } catch (Exception e) {
+            request.setAttribute("JWT_ERROR", "Lỗi xác thực hệ thống.");
         }
 
+        // Luôn gọi doFilter để request tiếp tục đi tới AuthenticationEntryPoint nếu không có Auth
         filterChain.doFilter(request, response);
     }
 
