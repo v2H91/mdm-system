@@ -8,7 +8,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
-@Document(indexName = "mdm-addresses")
+@Document(indexName = "${elasticsearch.index.address}")
 @Setting(settingPath = "elasticsearch/settings.json")
 @Getter
 @Setter

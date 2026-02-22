@@ -2,23 +2,40 @@ package mdm_service.masterdata.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import mdm_service.masterdata.constant.JobStatus;
+import mdm_service.masterdata.document.OrgHistoryDocument;
+import mdm_service.masterdata.document.OrganizationDocument;
 import mdm_service.masterdata.dto.request.OrganizationRequest;
 import mdm_service.masterdata.dto.response.OrganizationResponse;
+import mdm_service.masterdata.entity.BatchJob;
+import mdm_service.masterdata.repository.JobRepository;
+import mdm_service.masterdata.service.OrganizationHistoryService;
+import mdm_service.masterdata.service.OrganizationSearchService;
 import mdm_service.masterdata.service.OrganizationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/organizations")
 @Tag(name = "Organization Management", description = "Quản lý dữ liệu Master cho Tổ chức")
+@RequiredArgsConstructor
 public class OrganizationController {
 
     private final OrganizationService orgService;
+    private final OrganizationSearchService searchService;
+    private final JobRepository jobRepository;
+    private final OrganizationHistoryService historyService;
 
-    public OrganizationController(OrganizationService orgService) {
-        this.orgService = orgService;
-    }
 
     @PostMapping
     @Operation(summary = "Tạo mới tổ chức", description = "Hệ thống sẽ validate dựa trên regex trong DB")
@@ -35,5 +52,75 @@ public class OrganizationController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         orgService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<OrganizationDocument>> search(@RequestParam("q") String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(searchService.search(query));
+    }
+
+    @PostMapping("/export")
+    public ResponseEntity<StreamingResponseBody> exportDirect(HttpServletResponse response) {
+        StreamingResponseBody stream = orgService.executeExportJob(response);
+
+        return ResponseEntity.ok(stream);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<String> importFile(@RequestParam("file") MultipartFile file) throws IOException {
+        Path tempFile = Files.createTempFile("org_import_", ".xlsx");
+        file.transferTo(tempFile.toFile());
+
+        BatchJob job = new BatchJob();
+        job.setJobName("IMPORT_ORG_EXCEL");
+        job.setStatus(JobStatus.PENDING);
+        job = jobRepository.save(job);
+        orgService.executeImportJob(job.getId(), tempFile.toString());
+
+        return ResponseEntity.accepted().body("Job ID: " + job.getId());
+    }
+
+    // Phê duyệt 1 bản ghi
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<Void> approve(@PathVariable Long id) {
+        // Trong thực tế sẽ lấy email từ SecurityContext
+        orgService.approve(id, "admin@mdm.com");
+        return ResponseEntity.ok().build();
+    }
+
+    // Phê duyệt hàng loạt qua Job
+    @PostMapping("/bulk-approve")
+    public ResponseEntity<String> bulkApprove(@RequestBody List<Long> ids) {
+        orgService.approveBulk(ids, "admin@mdm.com");
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<Void> reject(@PathVariable Long id, @RequestBody String reason) {
+        if (reason == null || reason.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        orgService.reject(id, reason, "admin@mdm.com");
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/request-edit")
+    public ResponseEntity<String> requestEdit(@PathVariable Long id, @RequestBody OrganizationRequest dto) {
+        orgService.requestUpdate(id, dto);
+        return ResponseEntity.ok("Yêu cầu chỉnh sửa đã được gửi, đang chờ phê duyệt.");
+    }
+
+    @PostMapping("/{id}/approve-edit")
+    public ResponseEntity<Void> approveEdit(@PathVariable Long id) {
+        orgService.approveUpdate(id, "admin_user");
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/timeline")
+    public ResponseEntity<List<OrgHistoryDocument>> getOrgTimeline(@PathVariable("id") Long orgId) {
+        return ResponseEntity.ok(historyService.getTimeline(orgId));
     }
 }

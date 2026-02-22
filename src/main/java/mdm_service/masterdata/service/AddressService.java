@@ -20,23 +20,15 @@ public class AddressService {
     private final OrganizationRepository organizationRepository;
 
     @Transactional
-    public void addAddressToOrg(AddressRequest request) {
+    public void addAddress(AddressRequest request) {
         // 1. Validate Locations
-        Location province = locationRepository.findById(request.provinceId()).orElseThrow();
-        Location ward = locationRepository.findById(request.wardId()).orElseThrow();
-
-        // 2. Normalization: Tạo full address tự động
-        String fullAddress = String.format("%s, %s, %s, %s",
-                request.houseNumber(), request.street(), ward.getName(),  province.getName());
+        Location location = locationRepository.findByCode(request.locationCode()).orElseThrow();
 
         Address address = new Address();
         address.setHouseNumber(request.houseNumber());
         address.setStreet(request.street());
-        address.setProvince(province);
-        address.setWard(ward);
-        address.setFullAddress(fullAddress);
+        address.setLocation(location);
 
         addressRepository.save(address);
-        // TODO: Bắn Event đồng bộ địa chỉ sang các hệ thống Shipping/Logistics
     }
 }

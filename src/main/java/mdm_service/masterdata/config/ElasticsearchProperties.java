@@ -21,5 +21,6 @@ public class ElasticsearchProperties {
     public static class Index {
         private String address;
         private String org;
+        private String orgHistory;
     }
 }

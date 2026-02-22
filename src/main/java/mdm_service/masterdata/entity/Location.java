@@ -10,23 +10,15 @@ import mdm_service.masterdata.constant.LocationType;
 @Getter @Setter
 public class Location {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String code; // Ví dụ: "00004", "01"
 
-    @Column(unique = true, nullable = false)
-    private String code;
+    private String name; // Ví dụ: "Phường Ba Đình", "Thành phố Hà Nội"
 
-    private String name;
-    private String nameWithType;
+    private LocationType type; // Ví dụ: "Phường", "Xã", "Thành phố", "Tỉnh"
 
-    @Enumerated(EnumType.STRING)
-    private LocationType type;
-
-    @Column(name = "parent_code", length = 10)
-    private String parentCode; // Khớp SQL
-
-    @Column(columnDefinition = "TEXT")
-    private String pathWithType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_code")
+    private Location parent; // Phường có parent là Quận/Huyện hoặc Tỉnh/TP
 
     private boolean isDeleted = false;
 }

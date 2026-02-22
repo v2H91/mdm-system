@@ -16,28 +16,51 @@ CREATE TABLE IF NOT EXISTS organizations (
                                              tax_code VARCHAR(50) NOT NULL UNIQUE,
     legal_name VARCHAR(255) NOT NULL,
     short_name VARCHAR(100),
-    status ENUM('ACTIVE', 'INACTIVE', 'PENDING') DEFAULT 'ACTIVE',
+
+    -- Các trường trạng thái và phê duyệt
+    status ENUM('ACTIVE', 'INACTIVE', 'PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING',
+    approved_by VARCHAR(100),
+    approved_at TIMESTAMP NULL,
+
+    -- Các trường cho Reject
+    rejected_by VARCHAR(100),
+    rejected_at TIMESTAMP NULL,
+    rejected_reason TEXT,
+
+    -- Các trường Audit hệ thống
     is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Index cho status để Filter nhanh
+CREATE INDEX idx_org_status ON organizations(status);
 
 -- 3. Table Addresses
 CREATE TABLE IF NOT EXISTS addresses (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     house_number VARCHAR(255),
     street VARCHAR(255),
-    -- Đảm bảo cùng kiểu dữ liệu và collation với bảng locations
-    ward_code VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    province_code VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+
+    -- Chỉ giữ lại 1 cột tham chiếu đến cấp hành chính thấp nhất (Xã/Phường)
+    -- Đảm bảo cùng kiểu dữ liệu VARCHAR(10) và collation với bảng locations
+    location_code VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+
+    -- Cột lưu địa chỉ đầy đủ được sinh tự động từ Java
     full_address TEXT,
+
     is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_addr_ward FOREIGN KEY (ward_code) REFERENCES locations(code),
-    CONSTRAINT fk_addr_province FOREIGN KEY (province_code) REFERENCES locations(code)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    -- Ràng buộc khóa ngoại duy nhất tới bảng locations
+    CONSTRAINT fk_address_location FOREIGN KEY (location_code) REFERENCES locations(code)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Table Org_Addresses (SỬA LỖI TẠI ĐÂY)
+-- Thêm index để tối ưu các câu truy vấn tìm kiếm địa chỉ theo vùng
+CREATE INDEX idx_address_location_code ON addresses(location_code);
+
+-- 4. Table Org_Addresses
 CREATE TABLE IF NOT EXISTS org_addresses (
     org_id BIGINT NOT NULL,
     address_id BIGINT NOT NULL,

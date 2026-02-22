@@ -8,6 +8,7 @@ import mdm_service.masterdata.listener.OrganizationListener;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,11 +30,27 @@ public class Organization {
     private String shortName;
 
     @Enumerated(EnumType.STRING)
-    private Status status = Status.ACTIVE;
+    private Status status = Status.PENDING;
 
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrgAddress> orgAddresses = new HashSet<>();
 
     @Column(name = "is_deleted") // Map tường minh với cột trong DB
     private boolean isDeleted = false;
+
+    // Approved fields
+    private String approvedBy;
+    private LocalDateTime approvedAt;
+
+    // Reject fields
+    private String rejectedBy;
+    private LocalDateTime rejectedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectedReason;
+
+    @Column(columnDefinition = "JSON")
+    private String pendingData;
+
+    private Boolean isEditing = false;
 }

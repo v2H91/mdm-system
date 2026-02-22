@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mdm_service.masterdata.constant.JobStatus;
 import mdm_service.masterdata.document.AddressDocument;
-import mdm_service.masterdata.document.OrganizationDocument;
 import mdm_service.masterdata.entity.Address;
 import mdm_service.masterdata.entity.BatchJob;
 import mdm_service.masterdata.entity.Organization;
@@ -20,7 +19,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

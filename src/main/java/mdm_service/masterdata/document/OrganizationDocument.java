@@ -10,7 +10,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 
 import java.util.List;
 
-@Document(indexName = "mdm-org")
+@Document(indexName = "${elasticsearch.index.org}")
 @Setting(settingPath = "elasticsearch/settings.json") // Nếu bạn có cấu hình vi_analyzer
 @Getter
 @Setter
@@ -34,6 +34,9 @@ public class OrganizationDocument {
     // Lưu danh sách địa chỉ lồng nhau (Nested) để hỗ trợ tìm kiếm mờ theo địa chỉ của tổ chức
     @Field(type = FieldType.Nested)
     private List<OrganizationAddressDocument> addresses;
+
+    @Field(type = FieldType.Text, analyzer = "vi_analyzer")
+    private String rejectedReason;
 
     @Getter
     @Setter

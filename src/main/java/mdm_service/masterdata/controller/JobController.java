@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/organizations/{orgId}/addresses")
-@Tag(name = "check Job API", description = "Quản lý Job proccesing")
+@Tag(name = "check Job API", description = "Quản lý Job processing")
 @RequiredArgsConstructor
 public class JobController {
 
