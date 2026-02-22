@@ -58,6 +58,7 @@ public class OrganizationService {
     @Transactional
     @CacheEvict(value = "organizations", allEntries = true)
     public OrganizationResponse create(OrganizationRequest request) {
+        validationService.validate("organization", request, null);
         log.info("Creating organization with tax code: {}", request.taxCode());
 
         // 1. Data Validation & Normalization
@@ -92,7 +93,7 @@ public class OrganizationService {
 
     @Cacheable(value = "organizations", key = "#id")
     public OrganizationResponse getById(Long id) {
-        Organization org = organizationRepository.findByIdWithAddresses(id).orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+        Organization org = organizationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
         return mapToResponse(org);
     }
@@ -270,6 +271,8 @@ public class OrganizationService {
     public void requestUpdate(Long id, OrganizationRequest updateDTO) {
         Organization org = organizationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Org không tồn tại"));
+
+        validationService.validate("organization", updateDTO, org);
 
         // Chuyển DTO thành JSON để lưu vào hàng đợi duyệt
         ObjectMapper mapper = new ObjectMapper();

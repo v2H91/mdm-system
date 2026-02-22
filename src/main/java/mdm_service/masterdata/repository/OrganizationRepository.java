@@ -4,8 +4,6 @@ import mdm_service.masterdata.entity.Organization;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -22,15 +20,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     // Kiểm tra tồn tại để chống trùng (Duplicate Detection)
     boolean existsByTaxCodeAndIsDeletedFalse(String taxCode);
-
-    /**
-     * Sử dụng EntityGraph để fetch các mối quan hệ lồng nhau.
-     * "addresses" là Set<Address> trong Organization.
-     * "addresses.province", "addresses.district", "addresses.ward" là các trường trong Address.
-     */
-    @EntityGraph(attributePaths = {"addresses", "addresses.province", "addresses.district", "addresses.ward"})
-    @Query("SELECT o FROM Organization o WHERE o.id = :id")
-    Optional<Organization> findByIdWithAddresses(@Param("id") Long id);
 
     // Tìm kiếm theo tax_code (Master Data thường tìm theo mã này)
     @EntityGraph(attributePaths = {"addresses"})

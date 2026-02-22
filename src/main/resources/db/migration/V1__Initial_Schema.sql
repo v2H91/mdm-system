@@ -73,11 +73,14 @@ CREATE TABLE IF NOT EXISTS org_addresses (
 -- 5. Table Validation Rules
 CREATE TABLE IF NOT EXISTS validation_rules (
                                                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                                entity_name VARCHAR(50) NOT NULL,
-    field_name VARCHAR(50) NOT NULL,
-    regex_pattern VARCHAR(255) NOT NULL,
-    error_message VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE
+                                                entity_name VARCHAR(50) NOT NULL,    -- Ví dụ: 'organization', 'address'
+    field_name VARCHAR(50) NOT NULL,     -- Ví dụ: 'tax_code', 'email'
+    regex_pattern VARCHAR(255),          -- Biểu thức chính quy để validate
+    error_message VARCHAR(255),          -- Thông báo lỗi tùy chỉnh
+    is_read_only BOOLEAN DEFAULT FALSE,  -- Nếu TRUE, không cho phép cập nhật trường này
+    is_required BOOLEAN DEFAULT FALSE,   -- Bổ sung check bắt buộc nhập
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 6. Table Data Mappings

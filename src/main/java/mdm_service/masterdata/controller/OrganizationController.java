@@ -16,6 +16,8 @@ import mdm_service.masterdata.service.OrganizationSearchService;
 import mdm_service.masterdata.service.OrganizationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -84,26 +86,32 @@ public class OrganizationController {
     }
 
     // Phê duyệt 1 bản ghi
+    @PreAuthorize("hasAnyRole('ADMIN', 'APPROVER')")
     @PostMapping("/{id}/approve")
     public ResponseEntity<Void> approve(@PathVariable Long id) {
         // Trong thực tế sẽ lấy email từ SecurityContext
-        orgService.approve(id, "admin@mdm.com");
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        orgService.approve(id, currentUser);
         return ResponseEntity.ok().build();
     }
 
     // Phê duyệt hàng loạt qua Job
+    @PreAuthorize("hasAnyRole('ADMIN', 'APPROVER')")
     @PostMapping("/bulk-approve")
     public ResponseEntity<String> bulkApprove(@RequestBody List<Long> ids) {
-        orgService.approveBulk(ids, "admin@mdm.com");
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        orgService.approveBulk(ids, currentUser);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('ADMIN', 'APPROVER')")
     public ResponseEntity<Void> reject(@PathVariable Long id, @RequestBody String reason) {
         if (reason == null || reason.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-        orgService.reject(id, reason, "admin@mdm.com");
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        orgService.reject(id, reason, currentUser);
         return ResponseEntity.ok().build();
     }
 
@@ -114,8 +122,10 @@ public class OrganizationController {
     }
 
     @PostMapping("/{id}/approve-edit")
+    @PreAuthorize("hasAnyRole('ADMIN', 'APPROVER')")
     public ResponseEntity<Void> approveEdit(@PathVariable Long id) {
-        orgService.approveUpdate(id, "admin_user");
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        orgService.approveUpdate(id, currentUser);
         return ResponseEntity.ok().build();
     }
 
