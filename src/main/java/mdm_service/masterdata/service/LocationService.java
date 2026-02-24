@@ -23,7 +23,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class LocationImportService {
+public class LocationService {
     private final LocationRepository locationRepository;
     private final JobRepository jobRepository;
 
@@ -105,5 +105,10 @@ public class LocationImportService {
         // Tạo đối tượng Pageable (trang bắt đầu từ 0)
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
         return locationRepository.findAll(pageable);
+    }
+
+    public List<Location> searchByName(String name) {
+        // Sử dụng JPA để truy vấn trực tiếp vào MySQL
+        return locationRepository.findByNameContainingIgnoreCase(name);
     }
 }

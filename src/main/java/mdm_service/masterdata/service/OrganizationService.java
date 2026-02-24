@@ -54,16 +54,8 @@ public class OrganizationService {
     @Transactional
     @CacheEvict(value = "organizations", allEntries = true)
     public OrganizationResponse create(OrganizationRequest request) {
-        validationService.validate("organization", request, null);
-        log.info("Creating organization with tax code: {}", request.taxCode());
+        validationService.validate("ORGANIZATION", request, null);
 
-        // 1. Data Validation & Normalization
-        // TODO: Chỗ này gọi ValidationService để load Regex từ DB bảng validation_rules
-        validationService.validate("ORGANIZATION", "tax_code", request.taxCode());
-        validationService.validate("ORGANIZATION", "legal_name", request.legalName());
-
-        // 2. Duplicate Detection
-        // TODO: Triển khai thuật toán Levenshtein Distance để check trùng tên tương đối
         if (organizationRepository.findByTaxCode(request.taxCode()).isPresent()) {
             throw new BusinessException("Mã số thuế đã tồn tại trong hệ thống Master Data");
         }

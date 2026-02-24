@@ -7,7 +7,7 @@ import mdm_service.masterdata.constant.JobStatus;
 import mdm_service.masterdata.entity.BatchJob;
 import mdm_service.masterdata.entity.Location;
 import mdm_service.masterdata.repository.JobRepository;
-import mdm_service.masterdata.service.LocationImportService;
+import mdm_service.masterdata.service.LocationService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +17,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/locations")
 @RequiredArgsConstructor
 public class LocationController {
-    private final LocationImportService importService;
+    private final LocationService locationService;
     private final JobRepository jobRepository;
 
     @Operation(summary = "Import địa chỉ từ file Excel")
@@ -42,7 +43,7 @@ public class LocationController {
             job = jobRepository.save(job);
 
             // 3. Gọi Service xử lý ngầm
-            importService.importLocations(job.getId(), tempFile.toString());
+            locationService.importLocations(job.getId(), tempFile.toString());
             // 4. Trả về Job ID ngay lập tức
             return ResponseEntity.accepted().body("Job ID: " + job.getId());
         } catch (Exception e) {
@@ -56,7 +57,14 @@ public class LocationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<Location> locations = importService.getAllLocations(page, size);
+        Page<Location> locations = locationService.getAllLocations(page, size);
         return ResponseEntity.ok(locations);
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('ADMIN', 'APPROVER', 'VIEWER')")
+    public ResponseEntity<List<Location>> searchLocation(@RequestParam String name) {
+        List<Location> results = locationService.searchByName(name);
+        return ResponseEntity.ok(results);
     }
 }
